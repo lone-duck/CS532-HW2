@@ -31,7 +31,7 @@ def eval_env():
         'append' : lambda x, y: torch.cat((x, torch.tensor([y]))),
         'first' : lambda x: x[0],
         'last' : lambda x: x[-1],
-        'remove': lambda x, y : torch.cat((x[:y], x[y+1:])) if isinstance(x, torch.Tensor) else {i:x[i] for i in x if i != y}
+        'remove': lambda x, y : torch.cat((x[:y.long()], x[y.long()+1:])) if isinstance(x, torch.Tensor) else {i:x[i] for i in x if i != y}
         })
 
 

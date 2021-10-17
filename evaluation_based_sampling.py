@@ -4,32 +4,45 @@ from primitives import eval_env
 import torch
 
 
+ENV = None
+
 def evaluate_program(ast, return_sig=False):
     """Evaluate a program as desugared by daphne, generate a sample from the prior
     Args:
         ast: json FOPPL program
     Returns: sample from the prior of ast
     """
-    env = eval_env()
-    ret, sig = evaluate(ast, env)
+    global ENV
+    ENV = eval_env()
+    """
+    something here to deal with defns
+    
+    """
+    ret, sig = evaluate(ast)
     return (ret, sig) if return_sig else ret
 
-def evaluate(e, env, sig=None):
+# inspired by https://norvig.com/lispy.html
+def evaluate(e, sig=None):
     # variable reference
     if isinstance(e, str):        
-        return env[e], sig
+        return ENV[e], sig
     # constant number
     elif isinstance(e, (int, float)):   
         return torch.tensor(float(e)), sig
     # root of tree
     # THIS MUST BE FIXED TO ACCOUNT FOR DEFNs!!!!
     elif isinstance(e, list) and len(e) == 1:  
-        return evaluate(e[0], env)
-    # STUFF NEEDS TO GO HERE
+        return evaluate(e[0])
+    # if statements
+    elif e[0] == 'if':
+        (_, test, conseq, alt) = e
+        print(test)
+        exp = (conseq if evaluate(test)[0] else alt)
+        return evaluate(exp)
     # procedure call
     else:
-        proc, sig = evaluate(e[0], env)
-        args = [evaluate(arg, env)[0] for arg in e[1:]]
+        proc, sig = evaluate(e[0])
+        args = [evaluate(arg)[0] for arg in e[1:]]
         result, sig = proc(*args), sig
         return result, sig
 
@@ -47,8 +60,8 @@ def run_deterministic_tests():
         #note: this path should be with respect to the daphne path!
         ast = daphne(['desugar', '-i', '../CS532-HW2/programs/tests/deterministic/test_{}.daphne'.format(i)])
         truth = load_truth('programs/tests/deterministic/test_{}.truth'.format(i))
-        print(ast)
         ret, sig = evaluate_program(ast, return_sig=True)
+        print(ast)
         print(ret)
         try:
             assert(is_tol(ret, truth))
