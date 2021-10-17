@@ -3,7 +3,6 @@ from tests import is_tol, run_prob_test,load_truth
 from primitives import eval_env
 import torch
 
-
 ENV = None
 
 def evaluate_program(ast, return_sig=False):
@@ -14,12 +13,13 @@ def evaluate_program(ast, return_sig=False):
     """
     global ENV
     ENV = eval_env()
-    """
-    something here to deal with defns
-    
-    """
+    for defn in ast[:-1]:
+        f_name = defn[1]
+        f_v_is = defn[2]
+        f_expr = defn[3]
+        ENV.update({f_name: (f_v_is, f_expr)})
     l = {}
-    ret, sig = evaluate(ast, l)
+    ret, sig = evaluate(ast[-1], l)
     return (ret, sig) if return_sig else ret
 
 # inspired by https://norvig.com/lispy.html
@@ -37,9 +37,6 @@ def evaluate(e, l, sig=None):
     # constant number
     elif isinstance(e, (int, float)):   
         return torch.tensor(float(e)), sig
-    # will need to get rid of this later
-    elif isinstance(e, list) and len(e) == 1:  
-        return evaluate(e[0], l)
     # if statements
     elif e[0] == 'if':
         (_, test, conseq, alt) = e
@@ -51,12 +48,20 @@ def evaluate(e, l, sig=None):
         symbol = e[1][0]
         value, _ = evaluate(e[1][1], l)
         return evaluate(e[2], {**l, symbol: value})
-    # procedure call
+    # procedure call, either primitive or user-defined
     else:
         proc, sig = evaluate(e[0], l)
-        args = [evaluate(arg, l)[0] for arg in e[1:]]
-        result, sig = proc(*args), sig
-        return result, sig
+        if callable(proc):
+            args = [evaluate(arg, l)[0] for arg in e[1:]]
+            result, sig = proc(*args), sig
+            return result, sig
+        else:
+            v_is, e0 = proc 
+            assert(len(v_is) == len(e[1:]))
+            c_is = [evaluate(arg, l)[0] for arg in e[1:]]
+            l_proc = dict(zip(v_is, c_is))
+            return evaluate(e0, {**l, **l_proc})
+    
     
 
 
