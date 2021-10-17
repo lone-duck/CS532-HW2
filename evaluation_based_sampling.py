@@ -40,22 +40,26 @@ def evaluate(e, l, sig=None):
     # if statements
     elif e[0] == 'if':
         (_, test, conseq, alt) = e
-        print(test)
         exp = (conseq if evaluate(test, l)[0] else alt)
         return evaluate(exp, l)
     elif e[0] == 'let':
         # get symbol
         symbol = e[1][0]
+        # get value of e1
         value, _ = evaluate(e[1][1], l)
+        # evaluate e2 with value 
         return evaluate(e[2], {**l, symbol: value})
     # procedure call, either primitive or user-defined
     else:
         proc, sig = evaluate(e[0], l)
+        # primitives are functions
         if callable(proc):
             args = [evaluate(arg, l)[0] for arg in e[1:]]
             result, sig = proc(*args), sig
             return result, sig
+        # user defined functions are not
         else:
+            # as written in algorithm 6
             v_is, e0 = proc 
             assert(len(v_is) == len(e[1:]))
             c_is = [evaluate(arg, l)[0] for arg in e[1:]]
