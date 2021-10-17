@@ -42,6 +42,7 @@ def evaluate(e, l, sig=None):
         (_, test, conseq, alt) = e
         exp = (conseq if evaluate(test, l)[0] else alt)
         return evaluate(exp, l)
+    # let statements
     elif e[0] == 'let':
         # get symbol
         symbol = e[1][0]
@@ -49,6 +50,12 @@ def evaluate(e, l, sig=None):
         value, _ = evaluate(e[1][1], l)
         # evaluate e2 with value 
         return evaluate(e[2], {**l, symbol: value})
+    # sample statement
+    if e[0] == 'sample':
+        dist = evaluate(e[1], l)[0]
+        # make sure it is a distribution object
+        assert getattr(dist, '__module__', None).split('.')[:2] == ['torch', 'distributions']
+        return dist.sample(), sig
     # procedure call, either primitive or user-defined
     else:
         proc, sig = evaluate(e[0], l)
@@ -119,10 +126,10 @@ def run_probabilistic_tests():
 if __name__ == '__main__':
 
     run_deterministic_tests()
-    """
+    
     run_probabilistic_tests()
 
-
+    """
     for i in range(1,5):
         ast = daphne(['desugar', '-i', '../CS532-HW2/programs/{}.daphne'.format(i)])
         print('\n\n\nSample of prior of program {}:'.format(i))

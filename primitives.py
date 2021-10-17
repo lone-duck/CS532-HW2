@@ -12,17 +12,17 @@ def pure_hashmap_update(d, k, v):
 
 # inspired by https://norvig.com/lispy.html
 def eval_env():
-	env = {}
-	env.update({
-		'+': op.add,
-       	'-': op.sub,
-        '*': op.mul,
-        '/': op.truediv,
-        '>': op.gt,
-        '<': op.lt,
-        '>=': op.ge,
-        '<=': op.le, 
-        '=': op.eq,
+    env = {}
+    env.update({
+        '+': torch.add,
+        '-': torch.sub,
+        '*': torch.mul,
+        '/': torch.div,
+        '>': torch.gt,
+        '<': torch.lt,
+        '>=': torch.ge,
+        '<=': torch.le, 
+        '=': torch.eq,
         'sqrt': torch.sqrt,
         'vector': lambda *x: torch.tensor(x),
         'hash-map': lambda *x : dict(zip([i.item() if isinstance(i, torch.Tensor) else i for i in x[::2]], x[1::2])),
@@ -31,8 +31,14 @@ def eval_env():
         'append' : lambda x, y: torch.cat((x, torch.tensor([y]))),
         'first' : lambda x: x[0],
         'last' : lambda x: x[-1],
-        'remove': lambda x, y : torch.cat((x[:y.long()], x[y.long()+1:])) if isinstance(x, torch.Tensor) else {i:x[i] for i in x if i != y}
+        'remove': lambda x, y : torch.cat((x[:y.long()], x[y.long()+1:])) if isinstance(x, torch.Tensor) else {i:x[i] for i in x if i != y},
+        'normal': torch.distributions.Normal,
+        'beta': torch.distributions.beta.Beta,
+        'exponential': torch.distributions.exponential.Exponential,
+        'uniform': torch.distributions.uniform.Uniform,
+        'bernoulli': torch.distributions.bernoulli.Bernoulli,
+        'discrete': lambda *x: torch.distributions.categorical.Categorical(torch.tensor(x)) 
         })
 
 
-	return env
+    return env
