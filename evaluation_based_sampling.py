@@ -31,8 +31,9 @@ def evaluate(e, l, sig=None):
             return ENV[e], sig
         elif e in l:
             return l[e], sig
-        # allows for hashmaps with string keys
+        # allows for hashmaps with string keys; for debugging setting this to fail
         else:
+            assert False, "Unknown symbol: {}".format(e)
             return e
     # constant number
     elif isinstance(e, (int, float)):   
@@ -56,9 +57,19 @@ def evaluate(e, l, sig=None):
         # make sure it is a distribution object
         assert getattr(dist, '__module__', None).split('.')[:2] == ['torch', 'distributions']
         return dist.sample(), sig
+    # obsere statements
+    # TODO: change this, maybe in this hw or for hw3
+    if e[0] == 'observe':
+        dist = evaluate(e[1], l)[0] # get dist
+        y = evaluate(e[2], l)[0]    # get observed value
+        # make sure it is a distribution object
+        assert getattr(dist, '__module__', None).split('.')[:2] == ['torch', 'distributions']
+        # TODO: do something with observed value
+        return dist.sample(), sig
     # procedure call, either primitive or user-defined
     else:
-        proc, sig = evaluate(e[0], l)
+        result = evaluate(e[0], l)
+        proc, sig = result
         # primitives are functions
         if callable(proc):
             args = [evaluate(arg, l)[0] for arg in e[1:]]
@@ -129,9 +140,10 @@ if __name__ == '__main__':
     
     run_probabilistic_tests()
 
-    """
+    #TODO: undo this!!!
     for i in range(1,5):
         ast = daphne(['desugar', '-i', '../CS532-HW2/programs/{}.daphne'.format(i)])
+        print('\n\n\n')
         print('\n\n\nSample of prior of program {}:'.format(i))
-        print(evaluate_program(ast)[0])
-    """
+        print(evaluate_program(ast, return_sig=True)[0])
+    
