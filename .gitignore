@@ -1,0 +1,10 @@
+.ipynb_checkpoints/
+Untitled.ipynb
+__pycache__/
+deterministic_tests.txt
+evaluation-based-results.ipynb
+extra_det_tests_pkl
+graph-scratch.ipynb
+probabilistic_tests.txt
+provided_det_tests_pkl
+scratch.ipynb
