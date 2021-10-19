@@ -31,10 +31,9 @@ def evaluate(e, l, sig=None):
             return ENV[e], sig
         elif e in l:
             return l[e], sig
-        # allows for hashmaps with string keys; for debugging setting this to fail
+        # could allow for hashmaps with string keys; for debugging setting this to fail
         else:
             assert False, "Unknown symbol: {}".format(e)
-            return e
     # constant number
     elif isinstance(e, (int, float)):   
         return torch.tensor(float(e)), sig
@@ -84,8 +83,6 @@ def evaluate(e, l, sig=None):
             l_proc = dict(zip(v_is, c_is))
             return evaluate(e0, {**l, **l_proc})
     
-    
-
 
 def get_stream(ast):
     """Return a stream of prior samples"""
@@ -140,7 +137,6 @@ if __name__ == '__main__':
     
     run_probabilistic_tests()
 
-    #TODO: undo this!!!
     for i in range(1,5):
         ast = daphne(['desugar', '-i', '../CS532-HW2/programs/{}.daphne'.format(i)])
         print('\n\n\n')
