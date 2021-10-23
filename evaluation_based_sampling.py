@@ -19,11 +19,11 @@ def evaluate_program(ast, return_sig=False):
         f_expr = defn[3]
         ENV.update({f_name: (f_v_is, f_expr)})
     l = {}
-    ret, sig = evaluate(ast[-1], l)
+    ret, sig = evaluate(ast[-1], l, None)
     return (ret, sig) if return_sig else ret
 
 # inspired by https://norvig.com/lispy.html
-def evaluate(e, l, sig=None):
+def evaluate(e, l, sig):
     # variable reference OR procedure OR just a string
     if isinstance(e, str):        
         # global procedures take precedence over locally defined vars
