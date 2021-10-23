@@ -40,48 +40,54 @@ def evaluate(e, l, sig):
     # if statements
     elif e[0] == 'if':
         (_, test, conseq, alt) = e
-        exp = (conseq if evaluate(test, l)[0] else alt)
-        return evaluate(exp, l)
+        test_value, sig = evaluate(test, l, sig)
+        expr = (conseq if test_value else alt)
+        return evaluate(expr, l, sig)
     # let statements
     elif e[0] == 'let':
         # get symbol
         symbol = e[1][0]
         # get value of e1
-        value, _ = evaluate(e[1][1], l)
+        value, sig = evaluate(e[1][1], l, sig)
         # evaluate e2 with value 
-        return evaluate(e[2], {**l, symbol: value})
+        return evaluate(e[2], {**l, symbol: value}, sig)
     # sample statement
     if e[0] == 'sample':
-        dist = evaluate(e[1], l)[0]
+        dist, sig = evaluate(e[1], l, sig)
         # make sure it is a distribution object
         assert getattr(dist, '__module__', None).split('.')[:2] == ['torch', 'distributions']
         return dist.sample(), sig
-    # obsere statements
+    # observe statements
     # TODO: change this, maybe in this hw or for hw3
     if e[0] == 'observe':
-        dist = evaluate(e[1], l)[0] # get dist
-        y = evaluate(e[2], l)[0]    # get observed value
+        dist, sig = evaluate(e[1], l, sig) # get dist
+        y, sig = evaluate(e[2], l, sig)    # get observed value
         # make sure it is a distribution object
         assert getattr(dist, '__module__', None).split('.')[:2] == ['torch', 'distributions']
         # TODO: do something with observed value
         return dist.sample(), sig
     # procedure call, either primitive or user-defined
     else:
-        result = evaluate(e[0], l)
-        proc, sig = result
+        proc, sig = evaluate(e[0], l, sig)
         # primitives are functions
         if callable(proc):
-            args = [evaluate(arg, l)[0] for arg in e[1:]]
-            result, sig = proc(*args), sig
+            args = [None]*len(e[1:])
+            for i, arg in enumerate(e[1:]):
+                result, sig = evaluate(arg, l, sig)
+                args[i] = result
+            result = proc(*args)
             return result, sig
         # user defined functions are not
         else:
             # as written in algorithm 6
             v_is, e0 = proc 
             assert(len(v_is) == len(e[1:]))
-            c_is = [evaluate(arg, l)[0] for arg in e[1:]]
+            c_is = [None]*len(e[1:])
+            for i, arg in enumerate(e[1:]):
+                result, sig = evaluate(arg, l, sig)
+                c_is[i] = result
             l_proc = dict(zip(v_is, c_is))
-            return evaluate(e0, {**l, **l_proc})
+            return evaluate(e0, {**l, **l_proc}, sig)
     
 
 def get_stream(ast):
